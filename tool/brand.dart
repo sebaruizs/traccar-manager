@@ -4,11 +4,18 @@ const appName = 'Ridder Gps';
 const packageId = 'com.ridder.manager';
 const version = '1.0.0+1';
 const url = "https://gps.ridder.com.py";
-final iconPath = '/Users/sebaruiz/Desktop/Desarrollos/Traccar Manager/traccar-manager/tool/icon.png';
+final iconPath = 'assets/icon.png';
 
 const keystoreFilePath = 'android/android.keystore';
 const keystoreAlias = 'key';
 const keystorePassword = 'password';
+
+Future<void> safeDelete(String path) async {
+  final file = File(path);
+  if (await file.exists()) {
+    await file.delete();
+  }
+}
 
 Future<void> main() async {
   await _generateIcons(iconPath);
@@ -22,11 +29,16 @@ Future<void> main() async {
 
 Future<void> _generateIcons(String icon) async {
   final dir = Directory('ios/Runner/Assets.xcassets/AppIcon.appiconset');
-  dir.deleteSync(recursive: true);
-  dir.createSync();
+  if (await dir.exists()) {
+  await dir.delete(recursive: true);
+  }
+  await dir.create(recursive: true);
 
-  File('android/app/src/main/res/drawable/ic_launcher_foreground.xml').delete();
-  File('android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml').delete();
+
+  await safeDelete('android/app/src/main/res/drawable/ic_launcher_foreground.xml');
+  await safeDelete('android/app/src/main/res/drawable-v24/ic_launcher_foreground.xml');
+  await safeDelete('android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml');
+
 
   final f = await _writeTempYaml('flutter_launcher_icons.yaml', '''
 flutter_launcher_icons:
@@ -35,7 +47,7 @@ flutter_launcher_icons:
   image_path: "$icon"
   remove_alpha_ios: true
 ''');
-  await _run('flutter', ['pub', 'run', 'flutter_launcher_icons']);
+  await _run('dart', ['run', 'flutter_launcher_icons']);
   await f.delete();
 
   await _replaceInFile(
@@ -68,7 +80,7 @@ Future<void> _updatePackageId(String id) async {
 
   await _replaceInFile(
     'ios/Runner.xcodeproj/project.pbxproj',
-    RegExp(r'PRODUCT_BUNDLE_IDENTIFIER = org\.traccar.*?;'),
+    RegExp(r'PRODUCT_BUNDLE_IDENTIFIER = .*?;'),
     'PRODUCT_BUNDLE_IDENTIFIER = $id;',
   );
 }
