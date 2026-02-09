@@ -1,10 +1,10 @@
 import 'dart:io';
 
-const appName = 'ACME Manager';
-const packageId = 'com.acme.manager';
+const appName = 'Ridder';
+const packageId = 'com.ridder.manager';
 const version = '1.0.0+1';
-const url = "https://example.com";
-final iconPath = '${Platform.environment['HOME']}/Downloads/icon.png';
+const url = "https://gps.ridder.com.py";
+final iconPath = '/Users/sebaruiz/Desktop/Desarrollos/Traccar Manager/traccar-manager/tool/icon.png';
 
 const keystoreFilePath = 'android/android.keystore';
 const keystoreAlias = 'key';
