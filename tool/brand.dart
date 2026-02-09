@@ -1,6 +1,6 @@
 import 'dart:io';
 
-const appName = 'Ridder';
+const appName = 'Ridder Gps';
 const packageId = 'com.ridder.manager';
 const version = '1.0.0+1';
 const url = "https://gps.ridder.com.py";
