@@ -342,98 +342,41 @@ Widget build(BuildContext context) {
           initialUserScripts: UnmodifiableListView<UserScript>([
             // 1) Bridge + cola + intercept XLSX
             UserScript(
-              injectionTime: UserScriptInjectionTime.AT_DOCUMENT_START,
-              source: r'''
-                (function () {
-                  // Bridge Flutter
-                  window.appInterface = {
-                    postMessage: function(message) {
-                      if (window.flutter_inappwebview && window.flutter_inappwebview.callHandler) {
-                        window.flutter_inappwebview.callHandler('appInterface', message);
-                      } else {
-                        window.__traccarMessageQueue = window.__traccarMessageQueue || [];
-                        window.__traccarMessageQueue.push(message);
-                      }
-                    }
-                  };
-
-                  // Vacia cola cuando el handler esté listo
-                  window.addEventListener('flutterInAppWebViewPlatformReady', function() {
-                    if (window.__traccarMessageQueue &&
-                        window.flutter_inappwebview &&
-                        window.flutter_inappwebview.callHandler) {
-                      window.__traccarMessageQueue.forEach(function(message) {
-                        window.flutter_inappwebview.callHandler('appInterface', message);
-                      });
-                      window.__traccarMessageQueue = [];
-                    }
-                  });
-
-                  // Intercepta XLSX generados como Blob
-                  const excelType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
-                  const originalCreateObjectURL = URL.createObjectURL;
-
-                  URL.createObjectURL = function(object) {
-                    try {
-                      if (object instanceof Blob && object.type === excelType) {
-                        const reader = new FileReader();
-                        reader.onload = () => {
-                          // envia base64 al lado nativo
-                          window.appInterface.postMessage('download|' + reader.result.split(',')[1]);
-                        };
-                        reader.readAsDataURL(object);
-                      }
-                    } catch (e) {}
-                    return originalCreateObjectURL.apply(this, arguments);
-                  };
-                })();
-              ''',
-            ),
-
-            // 2) 🔒 SOLO oculta el botón QR (IconButton de MUI) por CLASES + SVG
-            //    Esto es más robusto que matchear el "d" completo.
-            UserScript(
               injectionTime: UserScriptInjectionTime.AT_DOCUMENT_END,
               source: r'''
                 (function () {
-                  // Botón QR en tu captura:
-                  // <button class="MuiButtonBase-root MuiIconButton-root ... muiltr-9sn16m">
-                  //   <svg ...><path d="..."></path></svg>
-                  // </button>
 
-                  function hideQrButton(root) {
+                  // Icono que querés ocultar (QR/server)
+                  const TARGET_D =
+                    "M15 21h-2v-2h2zm-2-7h-2v5h2zm8-2h-2v4h2zm-2-2h-2v2h2zM7 12H5v2h2zm-2-2H3v2h2zm7-5h2V3h-2zm-7.5-.5v3h3v-3zM9 9H3V3h6zm-4.5 7.5v3h3v-3zM9 21H3v-6h6zm7.5-16.5v3h3v-3zM21 9h-6V3h6zm-2 10v-3h-4v2h2v3h4v-2zm-2-7h-4v2h4zm-4-2H7v2h2v2h2v-2h2zm1-1V7h-2V5h-2v4zM6.75 5.25h-1.5v1.5h1.5zm0 12h-1.5v1.5h1.5zm12-12h-1.5v1.5h1.5z";
+
+                  function hideTarget(root) {
                     root = root || document;
 
-                    // 1) Intenta por clases estables de MUI (ignora las muiltr-xxxxx)
-                    const btns = root.querySelectorAll('button.MuiIconButton-root');
+                    // ✅ IMPORTANTÍSIMO: SOLO botones colorPrimary (tu botón a ocultar)
+                    const btns = root.querySelectorAll(
+                      'button.MuiIconButton-root.MuiIconButton-colorPrimary'
+                    );
 
                     for (const btn of btns) {
-                      // tiene SVG adentro
-                      const hasSvg = !!btn.querySelector('svg');
-                      if (!hasSvg) continue;
+                      if (btn.getAttribute('data-hidden-by-app') === '1') continue;
 
-                      // Para no esconder otros IconButtons (ej: ojo password),
-                      // filtramos por tamaño típico del QR (40x40 en tu inspector),
-                      // pero tolerando variaciones.
-                      const r = btn.getBoundingClientRect();
-                      const looksLikeQr =
-                        (r.width >= 34 && r.width <= 48 && r.height >= 34 && r.height <= 48);
+                      const p = btn.querySelector('svg path');
+                      const d = p && p.getAttribute('d');
 
-                      if (looksLikeQr) {
+                      if (d === TARGET_D) {
                         btn.style.display = 'none';
                         btn.setAttribute('data-hidden-by-app', '1');
                       }
                     }
                   }
 
-                  // Ejecuta una vez
-                  hideQrButton(document);
+                  hideTarget(document);
 
-                  // Observa re-renders (MUI / React)
                   const obs = new MutationObserver((mutations) => {
                     for (const m of mutations) {
                       for (const n of m.addedNodes) {
-                        if (n && n.nodeType === 1) hideQrButton(n);
+                        if (n && n.nodeType === 1) hideTarget(n);
                       }
                     }
                   });
