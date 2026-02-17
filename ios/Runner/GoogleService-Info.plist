@@ -2,22 +2,18 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>CLIENT_ID</key>
-	<string>847296525014-8d6vg8a08lfk1mp8j6mbgv96gq3n7cob.apps.googleusercontent.com</string>
-	<key>REVERSED_CLIENT_ID</key>
-	<string>com.googleusercontent.apps.847296525014-8d6vg8a08lfk1mp8j6mbgv96gq3n7cob</string>
 	<key>API_KEY</key>
-	<string>AIzaSyCa-dBF6DlD3CtKODjgrpoUjEwESsMttj8</string>
+	<string>AIzaSyAUsoCC57i9iMxLqa3wCJJOl7xCMOapW8g</string>
 	<key>GCM_SENDER_ID</key>
-	<string>847296525014</string>
+	<string>552795712818</string>
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>org.traccar.TraccarManager</string>
+	<string>com.ridder.manager</string>
 	<key>PROJECT_ID</key>
-	<string>traccar-manager-app</string>
+	<string>ridder-f7fb3</string>
 	<key>STORAGE_BUCKET</key>
-	<string>traccar-manager-app.appspot.com</string>
+	<string>ridder-f7fb3.firebasestorage.app</string>
 	<key>IS_ADS_ENABLED</key>
 	<false></false>
 	<key>IS_ANALYTICS_ENABLED</key>
@@ -29,8 +25,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:847296525014:ios:a9ee9ddfdb62f027</string>
-	<key>DATABASE_URL</key>
-	<string>https://traccar-manager-app.firebaseio.com</string>
+	<string>1:552795712818:ios:d69c14bda3a7c8d546bb2b</string>
 </dict>
 </plist>

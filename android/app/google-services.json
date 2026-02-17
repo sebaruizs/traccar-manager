@@ -1,35 +1,26 @@
 {
   "project_info": {
-    "project_number": "847296525014",
-    "firebase_url": "https://traccar-manager-app.firebaseio.com",
-    "project_id": "traccar-manager-app",
-    "storage_bucket": "traccar-manager-app.appspot.com"
+    "project_number": "552795712818",
+    "project_id": "ridder-f7fb3",
+    "storage_bucket": "ridder-f7fb3.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:847296525014:android:ddfd572332cea794",
+        "mobilesdk_app_id": "1:552795712818:android:7baab0051f16c68446bb2b",
         "android_client_info": {
-          "package_name": "org.traccar.manager"
+          "package_name": "com.ridder.manager"
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyAAg2esrXqGG-_6TkPvpIfc3RlC2xFOysA"
+          "current_key": "AIzaSyDGanMck06iaTsODsHdhzVnSlsa3jBM1iI"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": [
-            {
-              "client_id": "847296525014-8d6vg8a08lfk1mp8j6mbgv96gq3n7cob.apps.googleusercontent.com",
-              "client_type": 2,
-              "ios_info": {
-                "bundle_id": "org.traccar.TraccarManager"
-              }
-            }
-          ]
+          "other_platform_oauth_client": []
         }
       }
     }
