@@ -18,24 +18,52 @@ class TokenStore {
     }
   }
 
+  Future<bool> _canUseBiometrics() async {
+    final canCheckBiometrics = await _auth.canCheckBiometrics;
+    final isDeviceSupported = await _auth.isDeviceSupported();
+
+    if (!canCheckBiometrics || !isDeviceSupported) {
+      return false;
+    }
+
+    final biometrics = await _auth.getAvailableBiometrics();
+    return biometrics.isNotEmpty;
+  }
+
+
   Future<String?> read(bool authenticate) async {
-    if (!await _storage.containsKey(key: _tokenKey)) {
-      return null;
-    }
-    try {
-      final bool authenticated = !authenticate || await _auth.authenticate(
-        localizedReason: 'Authenticate to access login token',
-      );
-      if (authenticated) {
-        return _storage.read(key: _tokenKey);
+  try {
+    final hasToken = await _storage.containsKey(key: _tokenKey);
+    if (!hasToken) return null;
+
+    bool authenticated = !authenticate;
+
+    if (authenticate) {
+      final hasBiometric = await _canUseBiometrics();
+      if (!hasBiometric) {
+        developer.log('Biometric authentication not available.');
+        return null;
       }
-    } on LocalAuthException catch (e) {
-      developer.log('Failed to read token.', error: e);
-    } on PlatformException catch (e) {
-      developer.log('Failed to read token.', error: e);
+
+      authenticated = await _auth.authenticate(
+        localizedReason: 'Authenticate with Face ID to access login token',
+        biometricOnly: true,
+        persistAcrossBackgrounding: true,
+        sensitiveTransaction: true,
+      );
     }
+
+    if (!authenticated) return null;
+
+    return await _storage.read(key: _tokenKey);
+  } on LocalAuthException catch (e) {
+    developer.log('Failed to read token.', error: e);
+    return null;
+  } on PlatformException catch (e) {
+    developer.log('Failed to read token.', error: e);
     return null;
   }
+}
 
   Future<void> delete() async {
     _storage.delete(key: _tokenKey);

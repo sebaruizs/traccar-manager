@@ -27,11 +27,11 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSFaceIDUsageDescription</key>
-	<string>Face ID is required to securely store login token.</string>
+	<string>Usamos Face ID para proteger tu sesión.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Location is required to show your current location on the map.</string>
+	<string>La ubicación es requerida para mostrarte tu ubicación en el mapa.</string>
 	<key>NSCameraUsageDescription</key>
-	<string>Camera is required to scan QR codes.</string>
+	<string>Camara es requerida para escanear el código QR.</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UIBackgroundModes</key>
