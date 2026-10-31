@@ -3,7 +3,7 @@ import 'dart:io';
 const appName = 'Ridder GPS';
 const packageId = 'com.ridder.manager';
 const version = '1.0.0+1';
-const url = "https://gps.ridder.com.py";
+const url = "https://track.ridder.com.py";
 final iconPath = 'assets/icon.png';
 
 const keystoreFilePath = 'android/android.keystore';
@@ -97,8 +97,8 @@ Future<void> _updateVersion(String version) async {
 Future<void> _updateUrl(String url) async {
   await _replaceInFile(
     'lib/main_screen.dart',
-    RegExp(r'https://demo\.traccar\.org'),
-    url,
+    RegExp(r"_lockedUrl = 'https?://[^']*'"),
+    "_lockedUrl = '$url'",
   );
 }
 

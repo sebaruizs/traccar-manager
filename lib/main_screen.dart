@@ -26,7 +26,7 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   /// 🔒 HARD LOCK DEL SERVER
-  static const String _lockedUrl = 'https://gps.ridder.com.py';
+  static const String _lockedUrl = 'https://track.ridder.com.py';
 
   String get _baseUrl => _lockedUrl;
 
