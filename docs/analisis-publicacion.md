@@ -29,6 +29,25 @@ Después del análisis se aplicaron las fases 0 y 1 del plan (commits "Integrar 
 | Tests / CI | ninguno | `test/error_screen_test.dart`; `release.yml` adaptado (bundle id, `.aab`, paquete `com.ridder.manager`) |
 | Versión | `1.0.0+1` | `1.0.0+1` (se mantiene para el primer envío) |
 
+### 0.1 Segunda revisión (31 de octubre de 2026, commit `727de1d`)
+
+Verificado contra el repo público y el servidor real:
+
+- Repo **público** en GitHub y el keystore viejo (contraseña `password`) sigue en el historial (`8467282`…`727de1d`): dar la clave por comprometida; la de subida tiene que ser nueva (nunca se publicó nada con la vieja, así que no se pierde nada).
+- Servidor: Traccar **6.16.0**, certificado Let's Encrypt válido hasta 23-ene-2027, título web "Ridder GPS", registro público deshabilitado. **`disableChange` no está activado**: el botón QR de cambiar servidor sigue visible en el login (la app ignora el pedido).
+- No existe URL de política de privacidad en `ridder.com.py`.
+- Upstream sigue en `32bbc6b` (6.2.4+87): el fork está al día.
+
+Arreglos aplicados en esta revisión:
+
+- `tool/brand.dart`: `_updateUrl` buscaba `_lockedUrl` (ya no existía) y `_generateIcons` borraba el ícono adaptativo y el `default_notification_icon` del manifest. Reescrito: idempotente, íconos solo con `--icons` (adaptativo si hay `assets/icon_foreground.png`), keystore solo con `--keystore` y sin sobrescribir uno existente, y también actualiza `CFBundleName`, el esquema de deep link y el bundle de `RunnerTests`.
+- `ios/Runner/PrivacyInfo.xcprivacy` agregado y registrado en el proyecto Xcode (Device ID para push, Crash Data, UserDefaults CA92.1).
+- `lib/main_screen.dart`: el token de login y el installation ID se pasan a JS con `jsonEncode` en vez de interpolación directa.
+- `release.yml`: el primer envío a Play va al track `internal` (promover desde la consola).
+- `analyze.yml`: corre también `flutter test`.
+
+Sin cambios, a decidir: `TARGETED_DEVICE_FAMILY = "1,2"` (iPad: exige capturas de 13" y prueba en iPad; poner `1` para publicar solo iPhone), splash sin marca (color del sistema en ambas plataformas).
+
 Verificado en este entorno: `flutter pub get`, `flutter analyze` (0 issues) y `flutter test` (1/1) con Flutter 3.47.9. Lo que **no** se pudo verificar aquí y hay que hacer en una máquina con Android SDK y en macOS/Xcode 26: `flutter build appbundle --release`, `flutter build ipa`, y pruebas en dispositivo real (push, login con token, descargas, deep links). Pendientes que siguen siendo tuyos: keystore nuevo, cuentas de desarrollador, clave APNs en Firebase, `disableChange` y push en el servidor, política de privacidad, capturas y fichas (secciones 4, 5 y 8).
 
 ---

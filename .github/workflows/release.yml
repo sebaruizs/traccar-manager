@@ -110,14 +110,16 @@ jobs:
           name: android-release
           path: .
 
-      - name: Upload to Google Play (production)
+      # Primer envío a prueba interna; promover a producción desde Play Console
+      # (o cambiar a `production` cuando la app ya esté publicada).
+      - name: Upload to Google Play (internal)
         uses: r0adkll/upload-google-play@v1
         with:
           serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
           packageName: com.ridder.manager
           releaseFiles: bundle/release/app-release.aab
           mappingFile: mapping/release/mapping.txt
-          tracks: production
+          tracks: internal
           status: completed
 
   build-ios:

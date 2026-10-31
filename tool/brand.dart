@@ -1,61 +1,75 @@
 import 'dart:io';
 
+/// Herramienta de marca. La marca Ridder ya está aplicada en el repo; este
+/// script existe para reaplicarla tras un merge de upstream o para cambiar
+/// nombre/versión/servidor en un solo lugar.
+///
+/// Uso (desde la raíz del repo):
+///   dart run tool/brand.dart              # nombre, package id, versión, URL
+///   dart run tool/brand.dart --icons      # además regenera los íconos
+///   dart run tool/brand.dart --keystore   # además crea el keystore de subida
+///
+/// `--keystore` exige la variable de entorno KEYSTORE_PASSWORD (12+ caracteres)
+/// y nunca sobrescribe un keystore existente.
 const appName = 'Ridder GPS';
 const packageId = 'com.ridder.manager';
 const version = '1.0.0+1';
-const url = "https://track.ridder.com.py";
-final iconPath = 'assets/icon.png';
+const url = 'https://track.ridder.com.py';
+const brandColor = '#0D6EFD';
+
+/// Ícono completo (fondo incluido) para iOS y el ícono legacy de Android.
+const iconPath = 'assets/icon.png';
+
+/// Capa frontal del ícono adaptativo de Android (logo sobre transparente, con
+/// margen de seguridad). Si no existe, se conservan los archivos actuales.
+const iconForegroundPath = 'assets/icon_foreground.png';
 
 // Fuera del repo: la firma nunca se versiona.
 const keystoreFilePath = '../environment/android.keystore';
 const keystoreAlias = 'key';
 final keystorePassword = Platform.environment['KEYSTORE_PASSWORD'] ?? '';
 
-Future<void> safeDelete(String path) async {
-  final file = File(path);
-  if (await file.exists()) {
-    await file.delete();
-  }
-}
-
-Future<void> main() async {
-  await _generateIcons(iconPath);
+Future<void> main(List<String> args) async {
   await _updateTitle(appName);
   await _updatePackageId(packageId);
   await _updateVersion(version);
   await _updateUrl(url);
-  await _createKeystore();
-  stdout.writeln('Please run `flutterfire configure` now.');
+  if (args.contains('--icons')) {
+    await _generateIcons();
+  }
+  if (args.contains('--keystore')) {
+    await _createKeystore();
+  }
+  stdout.writeln('Listo. Si cambiaste de proyecto Firebase, corré `flutterfire configure`.');
 }
 
-Future<void> _generateIcons(String icon) async {
-  final dir = Directory('ios/Runner/Assets.xcassets/AppIcon.appiconset');
-  if (await dir.exists()) {
-  await dir.delete(recursive: true);
+Future<void> _generateIcons() async {
+  final hasForeground = await File(iconForegroundPath).exists();
+  if (!hasForeground) {
+    stderr.writeln(
+      'Aviso: no existe $iconForegroundPath; se regeneran solo los íconos de iOS '
+      'y el legacy de Android. El ícono adaptativo actual se conserva.',
+    );
   }
-  await dir.create(recursive: true);
 
-
-  await safeDelete('android/app/src/main/res/drawable/ic_launcher_foreground.xml');
-  await safeDelete('android/app/src/main/res/drawable-v24/ic_launcher_foreground.xml');
-  await safeDelete('android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml');
-
-
+  // No se borra nada a mano: flutter_launcher_icons sobrescribe lo que genera.
+  // El ícono de notificación (ic_stat_notify) y su meta-data en el manifest
+  // no se tocan.
   final f = await _writeTempYaml('flutter_launcher_icons.yaml', '''
 flutter_launcher_icons:
   android: true
   ios: true
-  image_path: "$icon"
+  image_path: "$iconPath"
   remove_alpha_ios: true
-''');
-  await _run('dart', ['run', 'flutter_launcher_icons']);
-  await f.delete();
-
-  await _replaceInFile(
-    'android/app/src/main/AndroidManifest.xml',
-    RegExp(r'\s*<meta-data\s+android:name="com\.google\.firebase\.messaging\.default_notification_icon"[\s\S]*?/>', multiLine: true),
-    '',
-  );
+${hasForeground ? '''
+  adaptive_icon_background: "$brandColor"
+  adaptive_icon_foreground: "$iconForegroundPath"
+''' : ''}''');
+  try {
+    await _run('dart', ['run', 'flutter_launcher_icons']);
+  } finally {
+    await f.delete();
+  }
 }
 
 Future<void> _updateTitle(String name) async {
@@ -65,11 +79,13 @@ Future<void> _updateTitle(String name) async {
     'android:label="$name"',
   );
 
-  await _replaceInFile(
-    'ios/Runner/Info.plist',
-    RegExp(r'<key>CFBundleDisplayName</key>\s*<string>.*?</string>'),
-    '<key>CFBundleDisplayName</key>\n\t<string>$name</string>',
-  );
+  for (final key in ['CFBundleDisplayName', 'CFBundleName']) {
+    await _replaceInFile(
+      'ios/Runner/Info.plist',
+      RegExp('<key>$key</key>\\s*<string>.*?</string>'),
+      '<key>$key</key>\n\t<string>$name</string>',
+    );
+  }
 }
 
 Future<void> _updatePackageId(String id) async {
@@ -79,11 +95,34 @@ Future<void> _updatePackageId(String id) async {
     'applicationId = "$id"',
   );
 
+  // El bundle de tests lleva el sufijo .RunnerTests; se reemplaza primero el
+  // genérico y después se restaura el de tests.
   await _replaceInFile(
     'ios/Runner.xcodeproj/project.pbxproj',
-    
-    RegExp(r'PRODUCT_BUNDLE_IDENTIFIER = .*?;'),
+    RegExp(r'PRODUCT_BUNDLE_IDENTIFIER = (?!.*\.RunnerTests;).*?;'),
     'PRODUCT_BUNDLE_IDENTIFIER = $id;',
+  );
+  await _replaceInFile(
+    'ios/Runner.xcodeproj/project.pbxproj',
+    RegExp(r'PRODUCT_BUNDLE_IDENTIFIER = .*?\.RunnerTests;'),
+    'PRODUCT_BUNDLE_IDENTIFIER = $id.RunnerTests;',
+  );
+
+  // El package id también es el esquema de los deep links.
+  await _replaceInFile(
+    'lib/main_screen.dart',
+    RegExp(r"_appScheme = '[^']*'"),
+    "_appScheme = '$id'",
+  );
+  await _replaceInFile(
+    'android/app/src/main/AndroidManifest.xml',
+    RegExp(r'android:scheme="[^"]*"'),
+    'android:scheme="$id"',
+  );
+  await _replaceInFile(
+    'ios/Runner/Info.plist',
+    RegExp(r'<key>CFBundleURLSchemes</key>\s*<array>\s*<string>.*?</string>'),
+    '<key>CFBundleURLSchemes</key>\n\t\t\t<array>\n\t\t\t\t<string>$id</string>',
   );
 }
 
@@ -98,8 +137,8 @@ Future<void> _updateVersion(String version) async {
 Future<void> _updateUrl(String url) async {
   await _replaceInFile(
     'lib/main_screen.dart',
-    RegExp(r"_lockedUrl = 'https?://[^']*'"),
-    "_lockedUrl = '$url'",
+    RegExp(r"_serverUrl = 'https?://[^']*'"),
+    "_serverUrl = '$url'",
   );
 }
 
@@ -107,7 +146,11 @@ Future<void> _createKeystore() async {
   if (keystorePassword.length < 12) {
     throw Exception('Definí KEYSTORE_PASSWORD (12+ caracteres) antes de crear el keystore.');
   }
-  await Directory('../environment').create(recursive: true);
+  final keystore = File(keystoreFilePath);
+  if (await keystore.exists()) {
+    throw Exception('Ya existe $keystoreFilePath; no se sobrescribe. Borralo a mano si de verdad querés uno nuevo.');
+  }
+  await keystore.parent.create(recursive: true);
   final args = [
     '-genkeypair',
     '-v',
@@ -122,15 +165,15 @@ Future<void> _createKeystore() async {
   ];
   await _run('keytool', args);
 
-  final file = File('../environment/key.properties');
-  final content = '''
+  // Ruta relativa a android/app/, que es desde donde Gradle resuelve storeFile.
+  final file = File('${keystore.parent.path}/key.properties');
+  await file.writeAsString('''
 storePassword=$keystorePassword
 keyPassword=$keystorePassword
 keyAlias=$keystoreAlias
 storeFile=../../$keystoreFilePath
-''';
-  await file.writeAsString(content);
-
+''');
+  stdout.writeln('Keystore creado en $keystoreFilePath. Hacé un backup cifrado: si se pierde, hay que resetear la clave de subida en Play Console.');
 }
 
 Future<File> _writeTempYaml(String name, String content) async {

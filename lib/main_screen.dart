@@ -163,7 +163,7 @@ class _MainScreenState extends State<MainScreen> {
   Future<void> _initNotifications() async {
     await _initialized.future;
     _messaging.onRegistered.listen((installationId) {
-      _controller?.evaluateJavascript(source: "window.updateNotificationToken?.('$installationId')");
+      _controller?.evaluateJavascript(source: "window.updateNotificationToken?.(${jsonEncode(installationId)})");
     });
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
       final eventId = message.data['eventId'];
@@ -201,7 +201,7 @@ class _MainScreenState extends State<MainScreen> {
       case 'authentication':
         final loginToken = await _loginTokenStore.read(true);
         if (loginToken != null) {
-          _controller?.evaluateJavascript(source: "handleLoginToken?.('$loginToken')");
+          _controller?.evaluateJavascript(source: "handleLoginToken?.(${jsonEncode(loginToken)})");
         }
       case 'authenticated':
         if (!_authenticated.isCompleted) _authenticated.complete();

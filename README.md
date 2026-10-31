@@ -36,7 +36,19 @@ flutter build ipa --release         # iOS (requiere macOS y firma configurada)
 ```
 
 La firma de Android se lee de `../environment/key.properties` (fuera del repo).
-Nunca versionar keystores ni contraseñas.
+Nunca versionar keystores ni contraseñas. Para crear el keystore de subida:
+
+```sh
+KEYSTORE_PASSWORD='una-contraseña-larga' dart run tool/brand.dart --keystore
+```
+
+`tool/brand.dart` también reaplica nombre, package id, versión y servidor tras
+un merge de upstream (`dart run tool/brand.dart`; con `--icons` regenera los
+íconos a partir de `assets/icon.png` y, si existe, `assets/icon_foreground.png`).
+
+El workflow `release.yml` compila y sube a Play (prueba interna) y a App Store
+Connect al crear un tag `v*`; necesita los secretos que se listan al inicio del
+archivo.
 
 El análisis completo para la publicación en las tiendas está en
 [`docs/analisis-publicacion.md`](docs/analisis-publicacion.md).
