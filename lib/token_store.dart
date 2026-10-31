@@ -19,18 +19,13 @@ class TokenStore {
   }
 
   Future<String?> read(bool authenticate) async {
-    if (!await _storage.containsKey(key: _tokenKey)) {
-      developer.log('No token stored.');
-      return null;
-    }
-
     try {
+      if (!await _storage.containsKey(key: _tokenKey)) {
+        return null;
+      }
       final bool authenticated = !authenticate || await _auth.authenticate(
         localizedReason: 'Authenticate to access login token',
       );
-
-      developer.log('Authentication result: $authenticated');
-
       if (authenticated) {
         return await _storage.read(key: _tokenKey);
       }
@@ -39,7 +34,6 @@ class TokenStore {
     } on PlatformException catch (e) {
       developer.log('Failed to read token.', error: e);
     }
-
     return null;
   }
 

@@ -1,3 +1,5 @@
+import 'dart:ui' show PlatformDispatcher;
+
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
@@ -9,10 +11,15 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
   FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
+  PlatformDispatcher.instance.onError = (error, stack) {
+    FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+    return true;
+  };
   runApp(MainApp());
 }
 
 final GlobalKey<ScaffoldMessengerState> messengerKey = GlobalKey<ScaffoldMessengerState>();
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 class MainApp extends StatefulWidget {
   const MainApp({super.key});
@@ -29,8 +36,9 @@ class _MainAppState extends State<MainApp> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await rateMyApp.init();
-      if (mounted && rateMyApp.shouldOpenDialog) {  
-        rateMyApp.showRateDialog(context);
+      final dialogContext = navigatorKey.currentContext;
+      if (dialogContext != null && dialogContext.mounted && rateMyApp.shouldOpenDialog) {
+        rateMyApp.showRateDialog(dialogContext);
       }
     });
   }
@@ -38,6 +46,7 @@ class _MainAppState extends State<MainApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: navigatorKey,
       scaffoldMessengerKey: messengerKey,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
