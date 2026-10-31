@@ -12,13 +12,13 @@ plugins {
 }
 
 val keystoreProperties = Properties()
-val keystorePropertiesFile = rootProject.file("key.properties")
+val keystorePropertiesFile = rootProject.file("../../environment/key.properties")
 if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(FileInputStream(keystorePropertiesFile))
 }
 
 android {
-    namespace = "org.traccar.manager"
+    namespace = "com.ridder.manager"
     compileSdk = 37
     ndkVersion = flutter.ndkVersion
 

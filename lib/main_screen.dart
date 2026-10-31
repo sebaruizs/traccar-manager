@@ -13,8 +13,6 @@ import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:shared_preferences_android/shared_preferences_android.dart';
 import 'package:traccar_manager/error_screen.dart';
 import 'package:traccar_manager/main.dart';
 import 'package:traccar_manager/token_store.dart';
@@ -28,12 +26,12 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
-  static const _urlKey = 'url';
+  /// Servidor fijo de Ridder. La app no permite cambiarlo.
+  static const _serverUrl = 'https://track.ridder.com.py';
 
   final _initialized = Completer<void>();
   final _authenticated = Completer<void>();
 
-  late final SharedPreferencesWithCache _preferences;
   late final AppLinks _appLinks;
   StreamSubscription<Uri>? _appLinksSubscription;
   final _loginTokenStore = TokenStore();
@@ -56,7 +54,7 @@ class _MainScreenState extends State<MainScreen> {
     await _initialized.future;
     _appLinks = AppLinks();
     _appLinksSubscription = _appLinks.uriLinkStream.listen((uri) {
-      if (uri.scheme == 'org.traccar.manager') {
+      if (uri.scheme == _appScheme) {
         final baseUri = Uri.parse(_getUrl());
         final appPathSegments = [uri.host, ...uri.pathSegments];
         final updatedQueryParameters = Map<String, String>.from(uri.queryParameters);
@@ -82,7 +80,7 @@ class _MainScreenState extends State<MainScreen> {
       final originalRedirect = Uri.parse(uri.queryParameters['redirect_uri']!);
       final redirectSegments = originalRedirect.pathSegments;
       final updatedRedirect = Uri(
-        scheme: 'org.traccar.manager',
+        scheme: _appScheme,
         host: redirectSegments.first,
         path: '/${redirectSegments.skip(1).join('/')}',
         queryParameters: originalRedirect.queryParameters.isEmpty ? null : originalRedirect.queryParameters,
@@ -101,10 +99,11 @@ class _MainScreenState extends State<MainScreen> {
     super.dispose();
   }
 
-  String _getUrl() {
-    final url = _preferences.getString(_urlKey) ?? 'https://demo.traccar.org';
-    return url.endsWith('/') ? url.substring(0, url.length - 1) : url;
-  }
+  /// Esquema propio para los deep links (OAuth, etc.). Debe coincidir con
+  /// AndroidManifest.xml e Info.plist.
+  static const _appScheme = 'com.ridder.manager';
+
+  String _getUrl() => _serverUrl;
 
   bool _isDownloadable(Uri uri) {
     final lastSegment = uri.pathSegments.isNotEmpty ? uri.pathSegments.last.toLowerCase() : '';
@@ -144,13 +143,6 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   Future<void> _initWebView() async {
-    _preferences = await SharedPreferencesWithCache.create(
-      sharedPreferencesOptions: Platform.isAndroid
-        ? SharedPreferencesAsyncAndroidOptions(backend: SharedPreferencesAndroidBackendLibrary.SharedPreferences)
-        : SharedPreferencesOptions(),
-      cacheOptions: SharedPreferencesWithCacheOptions(allowList: {'url'}),
-    );
-
     var url = _getUrl();
     final initialMessage = await _messaging.getInitialMessage();
     if (initialMessage != null) {
@@ -189,7 +181,7 @@ class _MainScreenState extends State<MainScreen> {
       final notification = message.notification;
       if (notification != null) {
         _controller?.evaluateJavascript(source: "handleNativeNotification?.(${jsonEncode(message.toMap())})");
-        messengerKey.currentState?.showSnackBar(SnackBar(content: Text(notification.body ?? 'Unknown')));
+        messengerKey.currentState?.showSnackBar(SnackBar(content: Text(notification.body ?? 'Notificación')));
       }
     });
   }
@@ -227,10 +219,8 @@ class _MainScreenState extends State<MainScreen> {
           developer.log('Failed to save downloaded file', error: e);
         }
       case 'server':
-        final url = parts[1];
-        await _loginTokenStore.delete();
-        await _preferences.setString(_urlKey, url);
-        await _loadUrl(Uri.parse(url));
+        // El servidor es fijo: se ignora el pedido de cambio y se vuelve al inicio.
+        await _loadUrl(Uri.parse(_getUrl()));
     }
   }
 
@@ -258,12 +248,9 @@ class _MainScreenState extends State<MainScreen> {
     if (_loadingError != null) {
       return ErrorScreen(
         error: _loadingError!,
-        url: _getUrl(),
-        onUrlSubmitted: (url) async {
-          await _loginTokenStore.delete();
-          await _preferences.setString(_urlKey, url);
+        onRetry: () {
           setState(() {
-            _initialUrl = url;
+            _initialUrl = _getUrl();
             _loadingError = null;
             _controller = null;
             _controllerReady = false;
@@ -402,23 +389,11 @@ class _MainScreenState extends State<MainScreen> {
               );
             },
             onPermissionRequest: (controller, request) async {
-              var allGranted = true;
-              for (final resource in request.resources) {
-                PermissionStatus status;
-                final resourceUpper = resource.toString().toUpperCase();
-                if (resourceUpper.contains('VIDEO_CAPTURE') || resourceUpper.contains('CAMERA')) {
-                  status = await Permission.camera.request();
-                } else {
-                  allGranted = false;
-                  continue;
-                }
-                if (!status.isGranted) allGranted = false;
-              }
+              // La app no usa cámara ni micrófono: se deniega todo salvo la
+              // geolocalización, que se maneja en onGeolocationPermissionsShowPrompt.
               return PermissionResponse(
                 resources: request.resources,
-                action: allGranted
-                  ? PermissionResponseAction.GRANT
-                  : PermissionResponseAction.DENY,
+                action: PermissionResponseAction.DENY,
               );
             },
           ),

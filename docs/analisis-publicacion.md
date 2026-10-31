@@ -1,10 +1,35 @@
 # Análisis del fork de Traccar Manager para publicarlo como "Ridder GPS"
 
 Fecha del análisis: 31 de octubre de 2026.
-Commit analizado: `4527a49` (rama `main`, después del cambio de servidor a `https://track.ridder.com.py`).
+Commit analizado originalmente: `4527a49` (rama `main`, tras el cambio de servidor). Ver la sección 0 para los cambios aplicados después.
 Upstream comparado: `traccar/traccar-manager` en `32bbc6b` (29 de octubre de 2026).
 
 Resumen en una línea: es la app móvil de Traccar (Flutter), no el servidor. Ya tiene marca parcial de Ridder, pero el fork rompió el puente web↔nativo (push y sesión persistente no funcionan), tiene el keystore de firma con contraseña `password` subido al repo, y con el Flutter estable actual el proyecto Android no compila sin actualizar Gradle/AGP/Kotlin. Conviene rehacer el fork sobre el upstream actual antes de publicar.
+
+---
+
+## 0. Actualización: cambios ya aplicados en el repo
+
+Después del análisis se aplicaron las fases 0 y 1 del plan (commits "Integrar upstream…" y "Aplicar marca Ridder…"). Estado nuevo:
+
+| Tema | Antes | Ahora |
+|---|---|---|
+| Base de código | upstream de feb-2026 + 9 commits del fork | merge de upstream `32bbc6b` (6.2.4+87): Gradle 9.3.1, AGP 9.1.0, Kotlin 2.4.0, Java 17, compileSdk 37, iOS con SwiftPM y `UIScene`, Firebase 5/17/6, nuevo flujo de push |
+| Keystore | `android.keystore` + `key.properties` (contraseña `password`) en el repo | eliminados del árbol y en `.gitignore`; la firma se lee de `../environment/key.properties`; `tool/brand.dart` exige `KEYSTORE_PASSWORD`. **Siguen en el historial de git**: generar un keystore nuevo |
+| Puente web↔nativo | roto (sin `window.appInterface`) | restaurado (el de upstream); push, sesión con biometría y descargas vuelven a funcionar |
+| Servidor | `_lockedUrl` + hack de DOM para ocultar el botón QR | `_serverUrl` fijo en `main_screen.dart`, mensaje `server|` ignorado, sin scripts de DOM. Activar `disableChange` en el servidor para ocultar el botón |
+| Identificadores | `applicationId` Ridder pero `namespace`, `MainActivity`, deep link y bundle de tests de Traccar | todo `com.ridder.manager` (namespace, `kotlin/com/ridder/manager/MainActivity.kt`, esquema de deep link en manifest/`Info.plist`/Dart, `RunnerTests`, `DEVELOPMENT_TEAM` de Ridder) |
+| Permisos | `CAMERA` + `NSCameraUsageDescription`, `fetch` en background modes | cámara eliminada en Android, iOS y en el WebView; solo `remote-notification`; textos de ubicación/Face ID en español |
+| Red | cleartext permitido + CAs de usuario (Android), ATS desactivado (iOS) | solo HTTPS con CAs del sistema; sin `NSAllowsArbitraryLoads`; `ITSAppUsesNonExemptEncryption = NO` |
+| Íconos | sin ícono adaptativo; `ic_stat_notify` con el logo de Traccar | ícono adaptativo (fondo `#0D6EFD` + logo blanco) para todas las densidades; ícono de notificación neutro (marcador) |
+| Firebase | `firebase_options.dart` y `firebase.json` del proyecto de Traccar | regenerados con `ridder-f7fb3`; `firebase_analytics` eliminado (menos datos que declarar) |
+| Dependencias | `shared_preferences*`, `permission_handler` sin uso | `shared_preferences*` y `firebase_analytics` eliminados; `permission_handler` se conserva para el permiso de ubicación del WebView |
+| Pantalla de error | con campo de URL, nunca se mostraba | pantalla "No se pudo conectar" con botón Reintentar, conectada a `onReceivedError` |
+| Licencia | solo `LICENSE.txt`, README de Traccar | `NOTICE` con atribución, README propio, licencia de Traccar Manager registrada en `LicenseRegistry` |
+| Tests / CI | ninguno | `test/error_screen_test.dart`; `release.yml` adaptado (bundle id, `.aab`, paquete `com.ridder.manager`) |
+| Versión | `1.0.0+1` | `1.0.0+1` (se mantiene para el primer envío) |
+
+Verificado en este entorno: `flutter pub get`, `flutter analyze` (0 issues) y `flutter test` (1/1) con Flutter 3.47.9. Lo que **no** se pudo verificar aquí y hay que hacer en una máquina con Android SDK y en macOS/Xcode 26: `flutter build appbundle --release`, `flutter build ipa`, y pruebas en dispositivo real (push, login con token, descargas, deep links). Pendientes que siguen siendo tuyos: keystore nuevo, cuentas de desarrollador, clave APNs en Firebase, `disableChange` y push en el servidor, política de privacidad, capturas y fichas (secciones 4, 5 y 8).
 
 ---
 

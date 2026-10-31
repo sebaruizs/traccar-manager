@@ -1,83 +1,47 @@
 import 'package:flutter/material.dart';
-import 'package:traccar_manager/main.dart';
 
-class ErrorScreen extends StatefulWidget {
+/// Pantalla que se muestra cuando no se puede cargar el servidor de Ridder.
+/// El servidor es fijo, así que solo ofrece reintentar.
+class ErrorScreen extends StatelessWidget {
   final String error;
-  final String url;
-  final ValueChanged<String> onUrlSubmitted;
+  final VoidCallback onRetry;
 
   const ErrorScreen({
     super.key,
     required this.error,
-    required this.url,
-    required this.onUrlSubmitted,
+    required this.onRetry,
   });
-
-  @override
-  State<ErrorScreen> createState() => _ErrorScreenState();
-}
-
-class _ErrorScreenState extends State<ErrorScreen> {
-  late TextEditingController _controller;
-
-  void _submit() {
-    final text = _controller.text.trim();
-    final uri = Uri.tryParse(text);
-    final valid = text.isNotEmpty && uri != null && uri.isAbsolute &&
-      (uri.scheme == 'http' || uri.scheme == 'https') && uri.host.isNotEmpty;
-    if (valid) {
-      widget.onUrlSubmitted(text);
-    } else {
-      messengerKey.currentState?.showSnackBar(SnackBar(content: Text('Invalid URL')));
-    }
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = TextEditingController(text: widget.url);
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.cloud_off, size: 96),
-            const SizedBox(height: 32),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0),
-              child: Text(
-                widget.error,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.cloud_off, size: 96),
+              const SizedBox(height: 32),
+              Text(
+                'No se pudo conectar con el servidor',
                 style: Theme.of(context).textTheme.headlineSmall,
                 textAlign: TextAlign.center,
               ),
-            ),
-            const SizedBox(height: 32),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0),
-              child: TextField(
-                controller: _controller,
-                decoration: InputDecoration(
-                  border: OutlineInputBorder(),
-                  suffixIcon: InkWell(
-                    onTap: _submit,
-                    child: Icon(Icons.check),
-                  ),
-                ),
-                textInputAction: TextInputAction.go,
-                onSubmitted: (_) => _submit(),
+              const SizedBox(height: 16),
+              Text(
+                error,
+                style: Theme.of(context).textTheme.bodyMedium,
+                textAlign: TextAlign.center,
               ),
-            ),
-          ],
+              const SizedBox(height: 32),
+              FilledButton.icon(
+                onPressed: onRetry,
+                icon: const Icon(Icons.refresh),
+                label: const Text('Reintentar'),
+              ),
+            ],
+          ),
         ),
       ),
     );

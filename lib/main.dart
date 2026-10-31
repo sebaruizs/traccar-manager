@@ -2,13 +2,24 @@ import 'dart:ui' show PlatformDispatcher;
 
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:flutter/foundation.dart' show LicenseEntryWithLineBreaks, LicenseRegistry;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:rate_my_app/rate_my_app.dart';
 import 'package:traccar_manager/main_screen.dart';
 
+/// Color de marca de Ridder (el azul del logo).
+const ridderBlue = Color(0xFF0D6EFD);
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // Atribución exigida por la licencia Apache 2.0 de Traccar Manager.
+  LicenseRegistry.addLicense(() async* {
+    yield LicenseEntryWithLineBreaks(
+      const ['Traccar Manager'],
+      await rootBundle.loadString('NOTICE'),
+    );
+  });
   await Firebase.initializeApp();
   FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
   PlatformDispatcher.instance.onError = (error, stack) {
@@ -50,13 +61,13 @@ class _MainAppState extends State<MainApp> {
       scaffoldMessengerKey: messengerKey,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.blue,
+          seedColor: ridderBlue,
           brightness: Brightness.light,
         ),
       ),
       darkTheme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.blue,
+          seedColor: ridderBlue,
           brightness: Brightness.dark,
         ),
       ),

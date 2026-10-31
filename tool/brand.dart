@@ -6,9 +6,10 @@ const version = '1.0.0+1';
 const url = "https://track.ridder.com.py";
 final iconPath = 'assets/icon.png';
 
-const keystoreFilePath = 'android/android.keystore';
+// Fuera del repo: la firma nunca se versiona.
+const keystoreFilePath = '../environment/android.keystore';
 const keystoreAlias = 'key';
-const keystorePassword = 'password';
+final keystorePassword = Platform.environment['KEYSTORE_PASSWORD'] ?? '';
 
 Future<void> safeDelete(String path) async {
   final file = File(path);
@@ -103,6 +104,10 @@ Future<void> _updateUrl(String url) async {
 }
 
 Future<void> _createKeystore() async {
+  if (keystorePassword.length < 12) {
+    throw Exception('Definí KEYSTORE_PASSWORD (12+ caracteres) antes de crear el keystore.');
+  }
+  await Directory('../environment').create(recursive: true);
   final args = [
     '-genkeypair',
     '-v',
@@ -113,11 +118,11 @@ Future<void> _createKeystore() async {
     '-validity', '10000',
     '-storepass', keystorePassword,
     '-keypass', keystorePassword,
-    '-dname', 'CN=Brand, OU=Dev, O=Company, L=City, S=State, C=US',
+    '-dname', 'CN=Ridder GPS, O=Ridder, C=PY',
   ];
   await _run('keytool', args);
 
-  final file = File('android/key.properties');
+  final file = File('../environment/key.properties');
   final content = '''
 storePassword=$keystorePassword
 keyPassword=$keystorePassword
@@ -126,11 +131,6 @@ storeFile=../../$keystoreFilePath
 ''';
   await file.writeAsString(content);
 
-  await _replaceInFile(
-    'android/app/build.gradle.kts',
-    RegExp(r'val\s+keystorePropertiesFile\s*=.*'),
-    'val keystorePropertiesFile = rootProject.file("key.properties")',
-  );
 }
 
 Future<File> _writeTempYaml(String name, String content) async {

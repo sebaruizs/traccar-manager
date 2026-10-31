@@ -1,14 +1,13 @@
 name: traccar_manager
-description: "Traccar Manager"
+description: "Ridder GPS: app móvil de rastreo GPS de Ridder, basada en Traccar Manager."
 publish_to: 'none'
-version: 6.2.4+87
+version: 1.0.0+1
 
 environment:
   sdk: ^3.7.2
 
 dependencies:
   app_links: ^7.2.1
-  firebase_analytics: ^13.0.0
   firebase_core: ^5.0.0
   firebase_crashlytics: ^6.0.0
   firebase_messaging: ^17.0.0
@@ -22,8 +21,6 @@ dependencies:
   permission_handler: ^13.0.2
   rate_my_app: ^2.4.2
   share_plus: ^13.3.1
-  shared_preferences: ^2.5.5
-  shared_preferences_android: ^2.5.3
   url_launcher: ^6.3.3
 
 dev_dependencies:
@@ -34,3 +31,5 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - NOTICE

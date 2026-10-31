@@ -12,7 +12,7 @@ on:
         default: both
 
 env:
-  IOS_BUNDLE_ID: org.traccar.TraccarManager
+  IOS_BUNDLE_ID: com.ridder.manager
 
 jobs:
   build-android:
@@ -47,16 +47,18 @@ jobs:
           storeFile=../../../environment/android.keystore
           EOF
 
-      - name: Build APK
+      - name: Build APK and App Bundle
         run: |
           flutter pub get
           flutter build apk --release
+          flutter build appbundle --release
 
       - uses: actions/upload-artifact@v7
         with:
           name: android-release
           path: |
             build/app/outputs/flutter-apk/app-release.apk
+            build/app/outputs/bundle/release/app-release.aab
             build/app/outputs/mapping/release/mapping.txt
           if-no-files-found: error
           retention-days: 1
@@ -87,11 +89,11 @@ jobs:
           script: |
             adb wait-for-device
             adb install -r flutter-apk/app-release.apk
-            adb shell am start -W -n org.traccar.manager/org.traccar.manager.MainActivity
+            adb shell am start -W -n com.ridder.manager/com.ridder.manager.MainActivity
             sleep 10
             adb shell screencap -p /sdcard/launch.png
             adb pull /sdcard/launch.png launch.png
-            adb shell pidof org.traccar.manager > /dev/null || { echo "App process not running after launch — crashed."; exit 1; }
+            adb shell pidof com.ridder.manager > /dev/null || { echo "App process not running after launch — crashed."; exit 1; }
 
       - uses: actions/upload-artifact@v7
         with:
@@ -112,8 +114,8 @@ jobs:
         uses: r0adkll/upload-google-play@v1
         with:
           serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
-          packageName: org.traccar.manager
-          releaseFiles: flutter-apk/app-release.apk
+          packageName: com.ridder.manager
+          releaseFiles: bundle/release/app-release.aab
           mappingFile: mapping/release/mapping.txt
           tracks: production
           status: completed

@@ -1,38 +1,42 @@
-# [Traccar Manager app](https://www.traccar.org/manager)
+# Ridder GPS
 
-[![Get it on Google Play](https://www.tananaev.com/badges/google-play.svg)](https://play.google.com/store/apps/details?id=org.traccar.manager) [![Download on the App Store](https://www.tananaev.com/badges/app-store.svg)](https://itunes.apple.com/app/traccar-manager/id1113966562)
+App móvil (Android e iOS) de rastreo GPS de Ridder. Se conecta al servidor
+`https://track.ridder.com.py` y muestra la interfaz web de Traccar dentro de la
+app, sumando las funciones nativas: notificaciones push, inicio de sesión
+guardado con biometría, deep links y descarga/compartir de reportes.
 
-## Overview
+## Origen y licencia
 
-Traccar Manager is the official mobile app for managing and monitoring your GPS tracking devices with [Traccar](https://github.com/traccar/traccar), the open-source GPS tracking platform.
+Este proyecto es una versión modificada de
+[Traccar Manager](https://github.com/traccar/traccar-manager), la app oficial
+del proyecto de código abierto [Traccar](https://www.traccar.org), creada por
+Anton Tananaev y publicada bajo la
+[Apache License 2.0](LICENSE.txt). Ver [NOTICE](NOTICE) para la atribución
+completa. "Traccar" es una marca de su titular; Ridder GPS no está afiliada al
+proyecto Traccar.
 
-- **Live Tracking**: View the real-time location of all your devices on an interactive map.
-- **Device Management**: Add, edit, or remove devices directly from your mobile device.
-- **Event Notifications**: Receive alerts for geofence crossings, device status changes, and more.
-- **History and Reports**: Review past routes and generate trip history for any device.
-- **Secure and Private**: All your data stays on your own server—no third-party access.
+Cambios principales respecto al original:
 
-Connect the app to your Traccar Server, log in with your credentials, and instantly manage and monitor your fleet or personal devices from anywhere.
+- Marca Ridder (nombre, ícono, colores, identificadores `com.ridder.manager`).
+- Servidor fijo: la app no permite cambiar de servidor.
+- Permisos reducidos (sin cámara) y tráfico solo por HTTPS.
+- Proyecto Firebase propio para notificaciones push y Crashlytics.
 
-Don't have a Traccar server yet? [Try the live demo](https://www.traccar.org/demo-server/) or see the [installation guides](https://www.traccar.org/install-vps/) to set up your own for free.
+## Desarrollo
 
-| Manager App |
-|---|
-| <img src=".github/screenshot.png" alt="Traccar Manager app" width="200"> |
+Requisitos: Flutter estable (3.47 o superior), Android Studio con SDK 36/37 y
+JDK 17; para iOS, macOS con Xcode 26.
 
-## Build
-
-Standard Flutter project:
-
-```shell
+```sh
 flutter pub get
-flutter run
+flutter analyze
+flutter test
+flutter build appbundle --release   # Android (requiere environment/key.properties)
+flutter build ipa --release         # iOS (requiere macOS y firma configurada)
 ```
 
-## Team
+La firma de Android se lee de `../environment/key.properties` (fuera del repo).
+Nunca versionar keystores ni contraseñas.
 
-- Anton Tananaev ([anton@traccar.org](mailto:anton@traccar.org))
-
-## License
-
-Apache License, Version 2.0. See [LICENSE.txt](https://github.com/traccar/traccar-manager/blob/master/LICENSE.txt) for details.
+El análisis completo para la publicación en las tiendas está en
+[`docs/analisis-publicacion.md`](docs/analisis-publicacion.md).

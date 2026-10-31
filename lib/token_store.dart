@@ -24,7 +24,7 @@ class TokenStore {
         return null;
       }
       final bool authenticated = !authenticate || await _auth.authenticate(
-        localizedReason: 'Authenticate to access login token',
+        localizedReason: 'Confirmá tu identidad para entrar con la sesión guardada',
       );
       if (authenticated) {
         return await _storage.read(key: _tokenKey);

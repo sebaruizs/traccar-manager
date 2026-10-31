@@ -7,7 +7,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Traccar Manager</string>
+	<string>Ridder GPS</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -15,7 +15,7 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>traccar_manager</string>
+	<string>Ridder GPS</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -27,7 +27,7 @@
 		<dict>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>org.traccar.manager</string>
+				<string>com.ridder.manager</string>
 			</array>
 		</dict>
 	</array>
@@ -37,21 +37,16 @@
 	<false/>
 	<key>FirebaseMessagingInstallationIdEnabled</key>
 	<true/>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
-	<key>NSAppTransportSecurity</key>
-	<dict>
-		<key>NSAllowsArbitraryLoads</key>
-		<true/>
-	</dict>
-	<key>NSCameraUsageDescription</key>
-	<string>Camera is required to scan QR codes.</string>
 	<key>NSFaceIDUsageDescription</key>
-	<string>Face ID is required to securely store login token.</string>
+	<string>Face ID se usa para proteger el acceso a tu sesión guardada.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>Location is required to show your current location on the map.</string>
+	<string>La ubicación se usa para mostrar tu posición actual en el mapa.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Location is required to show your current location on the map.</string>
+	<string>La ubicación se usa para mostrar tu posición actual en el mapa.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
@@ -78,7 +73,6 @@
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>remote-notification</string>
-		<string>fetch</string>
 	</array>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
