@@ -11,8 +11,8 @@
 	<key>NSPrivacyCollectedDataTypes</key>
 	<array>
 		<dict>
-			<!-- Token de notificaciones / Firebase Installation ID, asociado al
-			     usuario en el servidor de Ridder para enviarle alertas. -->
+			<!-- Token de notificaciones push (FCM), asociado al usuario en el
+			     servidor de Ridder para enviarle alertas. -->
 			<key>NSPrivacyCollectedDataType</key>
 			<string>NSPrivacyCollectedDataTypeDeviceID</string>
 			<key>NSPrivacyCollectedDataTypeLinked</key>

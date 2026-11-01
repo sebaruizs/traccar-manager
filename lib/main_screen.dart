@@ -162,9 +162,6 @@ class _MainScreenState extends State<MainScreen> {
 
   Future<void> _initNotifications() async {
     await _initialized.future;
-    _messaging.onRegistered.listen((installationId) {
-      _controller?.evaluateJavascript(source: "window.updateNotificationToken?.(${jsonEncode(installationId)})");
-    });
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
       final eventId = message.data['eventId'];
       if (eventId != null) {
@@ -177,6 +174,8 @@ class _MainScreenState extends State<MainScreen> {
       developer.log('Failed to request notification permission', error: e);
     }
     await _authenticated.future.timeout(const Duration(seconds: 30), onTimeout: () {});
+    // ignore: deprecated_member_use
+    _messaging.onTokenRefresh.listen(_pushNotificationToken);
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       final notification = message.notification;
       if (notification != null) {
@@ -193,11 +192,7 @@ class _MainScreenState extends State<MainScreen> {
         if (parts.length > 1) {
           await _loginTokenStore.save(parts[1]);
         }
-        try {
-          await _messaging.register();
-        } catch (e) {
-          developer.log('Failed to register for notifications', error: e);
-        }
+        await _registerNotificationToken();
       case 'authentication':
         final loginToken = await _loginTokenStore.read(true);
         if (loginToken != null) {
@@ -205,11 +200,7 @@ class _MainScreenState extends State<MainScreen> {
         }
       case 'authenticated':
         if (!_authenticated.isCompleted) _authenticated.complete();
-        try {
-          await _messaging.register();
-        } catch (e) {
-          developer.log('Failed to register for notifications', error: e);
-        }
+        await _registerNotificationToken();
       case 'logout':
         await _loginTokenStore.delete();
       case 'download':
@@ -222,6 +213,29 @@ class _MainScreenState extends State<MainScreen> {
         // El servidor es fijo: se ignora el pedido de cambio y se vuelve al inicio.
         await _loadUrl(Uri.parse(_getUrl()));
     }
+  }
+
+  /// Flujo "clásico" de push: se sube a Traccar el token de registro FCM
+  /// (150+ caracteres), que es lo que entiende el servidor 6.16.0 de
+  /// track.ridder.com.py. El flujo nuevo de upstream (Installation ID de 22
+  /// caracteres vía `register()`/`onRegistered`) requiere un servidor con el
+  /// commit "Support Firebase registration ids" (19-oct-2026), posterior a
+  /// 6.16.0; cuando el servidor se actualice a una versión que lo incluya, se
+  /// puede volver a ese flujo (ver upstream e8561a8e) y reponer
+  /// `firebase_messaging_installation_id_enabled` en el manifest y
+  /// `FirebaseMessagingInstallationIdEnabled` en Info.plist.
+  Future<void> _registerNotificationToken() async {
+    try {
+      // ignore: deprecated_member_use
+      final token = await _messaging.getToken();
+      if (token != null) _pushNotificationToken(token);
+    } catch (e) {
+      developer.log('Failed to get notification token', error: e);
+    }
+  }
+
+  void _pushNotificationToken(String token) {
+    _controller?.evaluateJavascript(source: "window.updateNotificationToken?.(${jsonEncode(token)})");
   }
 
   bool _isRootOrLogin(String baseUrl, String? currentUrl) {

@@ -46,6 +46,12 @@ Arreglos aplicados en esta revisión:
 - `release.yml`: el primer envío a Play va al track `internal` (promover desde la consola).
 - `analyze.yml`: corre también `flutter test`.
 
+### 0.2 Push: flujo clásico de token FCM (1 de noviembre de 2026)
+
+Verificado contra el código fuente de Traccar: el flujo de push que trae upstream 6.2.4 (Installation ID de 22 caracteres vía `register()`/`onRegistered`, con `firebase_messaging_installation_id_enabled` / `FirebaseMessagingInstallationIdEnabled`) **solo funciona con un servidor que incluya el commit "Support Firebase registration ids" (traccar `3117f977` y traccar-web `28ec741e`, 19-oct-2026)**. Ese commit **no está en Traccar 6.16.0** (publicado el 27-sep-2026, el que corre en track.ridder.com.py): el `NotificatorFirebase` de 6.16.0 manda todo con `addAllTokens`, Firebase responde `INVALID_ARGUMENT` para los IDs de 22 caracteres y el servidor los borra del atributo `notificationTokens`. Consecuencia: la app oficial Traccar Manager de las tiendas (ya con el flujo nuevo) **no recibe push de este servidor**, y la nuestra tampoco lo habría hecho.
+
+Arreglo aplicado: la app vuelve al flujo clásico (el que upstream tenía hasta `e8561a8e`): obtiene el token de registro FCM con `getToken()` (marcado deprecated en firebase_messaging 17 pero vigente), lo sube con `updateNotificationToken` al recibir `login` y `authenticated`, y escucha `onTokenRefresh`. Se quitaron las dos banderas de Installation ID del manifest y de Info.plist. Cuando el servidor se actualice a una versión posterior a 6.16.0 que incluya el soporte de Installation IDs, se puede volver al flujo nuevo aplicando el equivalente de `e8561a8e` (el servidor acepta ambos tipos de token, y la web descarta los tokens largos cuando llega uno de 22 caracteres).
+
 Sin cambios, a decidir: `TARGETED_DEVICE_FAMILY = "1,2"` (iPad: exige capturas de 13" y prueba en iPad; poner `1` para publicar solo iPhone), splash sin marca (color del sistema en ambas plataformas).
 
 Verificado en este entorno: `flutter pub get`, `flutter analyze` (0 issues) y `flutter test` (1/1) con Flutter 3.47.9. Lo que **no** se pudo verificar aquí y hay que hacer en una máquina con Android SDK y en macOS/Xcode 26: `flutter build appbundle --release`, `flutter build ipa`, y pruebas en dispositivo real (push, login con token, descargas, deep links). Pendientes que siguen siendo tuyos: keystore nuevo, cuentas de desarrollador, clave APNs en Firebase, `disableChange` y push en el servidor, política de privacidad, capturas y fichas (secciones 4, 5 y 8).
