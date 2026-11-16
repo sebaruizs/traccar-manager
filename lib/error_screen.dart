@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Pantalla que se muestra cuando no se puede cargar el servidor de Ridder.
 /// El servidor es fijo, así que solo ofrece reintentar.
